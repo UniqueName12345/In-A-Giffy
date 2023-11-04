@@ -9,6 +9,8 @@ Alternatively, you can simply run `python main.py -s` to be prompted for the cus
 
 An automatic FFmpeg installer is under development, but it will be released in a separate repository as it is not specific to In A Giffy.
 
+**DO NOT BE ALARMED IF IT SAYS "config.yaml already exists"** This is just a bug in the code. It will not affect the functionality of the program.
+
 ## Running
 
 Since every library used in In A Giffy (apart from FFmpeg) is part of the Python standard library, you can just run the program.
