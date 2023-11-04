@@ -7,6 +7,18 @@ import subprocess
 
 # The below functions are related to the config file and ffmpeg path
 
+def cls() -> None:
+    """
+    Clear the console.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    os.system("cls" if os.name == "nt" else "clear")
+
 def create_config_file() -> None:
     """
     Creates a config.yaml file if it doesn't exist.
@@ -58,6 +70,24 @@ def set_ffmpeg_path(ffmpeg_path: str, config_path: str = "config.yaml") -> None:
         yaml.dump(config, f)
         f.truncate()
 
+def reset_config_file(config_path: str = "config.yaml") -> None:
+    """
+    Reset the config file to its default value.
+
+    Args:
+        config_path (str, optional): The path to the config file. Defaults to "config.yaml".
+
+    Returns:
+        None
+    """
+    if os.path.exists(config_path):
+        os.remove(config_path)
+    config = {"ffmpeg_path": ""}
+    with open(config_path, "w") as f:
+        yaml.dump(config, f)
+    print("Reset config.yaml file.")
+
+cls()
 create_config_file()
 ffmpeg_path = lookup_ffmpeg_path()
 set_ffmpeg_path(ffmpeg_path)
@@ -122,27 +152,46 @@ def convert_file(input_path: str, output_path: str, file_type: str) -> None:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", action="store_true", help="Specify custom ffmpeg.exe path")
+    parser.add_argument("-r", action="store_true", help="Reset ffmpeg.exe path to default")
     args = parser.parse_args()
 
     if args.s:
         custom_ffmpeg_path = input("Please enter the custom ffmpeg.exe path: ")
         with open("config.yaml", "w") as f:
             yaml.dump({"ffmpeg_path": custom_ffmpeg_path}, f)
-
+        ffmpeg_path = custom_ffmpeg_path
+        print("Restart the program for the change to take effect.")
+        exit()
+    
+    if args.r:
+        reset_config_file()
+        # set ffmpeg_path in config.yaml to the result of the lookup_ffmpeg_path function
+        ffmpeg_path = lookup_ffmpeg_path()
+        set_ffmpeg_path(ffmpeg_path)
+        print("Restart the program for the change to take effect.")
+        exit()
+    
+    def graceful_exit():
+        cls()
+        sys.exit(0)
+    
     while True:
-        choice = input("Do you want to convert MP4 to GIF or GIF to MP4? (mp4/gif): ")
-        if choice.lower() == "mp4":
-            path = input("Enter the path to the MP4 file: ")
-            output_path = input("Enter the output path (default: output/output.gif): ")
-            convert_file(path, output_path, "gif")
-            break
-        elif choice.lower() == "gif":
-            path = input("Enter the path to the GIF file: ")
-            output_path = input("Enter the output path (default: output/output.mp4): ")
-            convert_file(path, output_path, "mp4")
-            break
-        else:
-            print("Invalid choice. Please enter 'mp4' or 'gif'.")
+        try:
+            choice = input("Do you want to convert MP4 to GIF or GIF to MP4? (mp4/gif): ")
+            if choice.lower() == "mp4":
+                path = input("Enter the path to the MP4 file: ")
+                output_path = input("Enter the output path (default: output/output.gif): ")
+                convert_file(path, output_path, "gif")
+                break
+            elif choice.lower() == "gif":
+                path = input("Enter the path to the GIF file: ")
+                output_path = input("Enter the output path (default: output/output.mp4): ")
+                convert_file(path, output_path, "mp4")
+                break
+            else:
+                print("Invalid choice. Please enter 'mp4' or 'gif'.")
+        except KeyboardInterrupt:
+            graceful_exit()
 
 
 
