@@ -31,6 +31,16 @@ ffmpeg_path = lookup_ffmpeg_path()
 import subprocess
 
 def gif_to_mp4(input_path, output_path="output/output.mp4"):
+    """
+    Convert a GIF file to an MP4 file.
+
+    Parameters:
+        input_path (str): The path to the input GIF file.
+        output_path (str, optional): The path to the output MP4 file. Defaults to "output/output.mp4".
+
+    Returns:
+        None
+    """
     if ffmpeg_path is not None:
         command = [
             ffmpeg_path,
@@ -51,6 +61,16 @@ def gif_to_mp4(input_path, output_path="output/output.mp4"):
         subprocess.run(command)
 
 def mp4_to_gif(input_path, output_path="output/output.gif"):
+    """
+    Converts an MP4 video to a GIF image.
+
+    Parameters:
+        input_path (str): The path to the input MP4 file.
+        output_path (str, optional): The path to the output GIF file. Defaults to "output/output.gif".
+
+    Returns:
+        None
+    """
     if ffmpeg_path is not None:
         command = [
             ffmpeg_path,
@@ -88,10 +108,12 @@ def main():
         choice = input("Do you want to convert MP4 to GIF or GIF to MP4? (mp4/gif): ")
         if choice.lower() == "mp4":
             path = input("Enter the path to the MP4 file: ")
+            output_path = input("Enter the output path (default: output/output.gif): ")
             mp4_to_gif(path)
             break
         elif choice.lower() == "gif":
             path = input("Enter the path to the GIF file: ")
+            output_path = input("Enter the output path (default: output/output.mp4): ")
             gif_to_mp4(path)
             break
         else:
