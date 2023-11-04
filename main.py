@@ -2,22 +2,39 @@ import argparse
 import sys
 import yaml
 import os
+import typing
+import subprocess
 
-# Create a config.yaml file
-# The config.yaml file should contain the following:
-# - ffmpeg.exe path
-def create_config_file():
-    config_path = "config.yaml"
+# The below functions are related to the config file and ffmpeg path
+
+def create_config_file() -> None:
+    """
+    Creates a config.yaml file if it doesn't exist.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    config_path: str = "config.yaml"
     if not os.path.exists(config_path):
-        config = {"ffmpeg_path": ""}
+        config: typing.Dict[str, str] = {"ffmpeg_path": ""}
         with open(config_path, "w") as f:
             yaml.dump(config, f)
         print("Created config.yaml file.")
     else:
         print("config.yaml already exists.")
-def lookup_ffmpeg_path():
+
+def lookup_ffmpeg_path() -> typing.Optional[str]:
+    """
+    This function looks up the path of the ffmpeg executable.
+
+    Returns:
+        Optional[str]: The path of the ffmpeg executable if found, else None.
+    """
     with open("config.yaml", "r") as f:
-        config = yaml.safe_load(f)
+        config: typing.Dict[str, typing.Any] = yaml.safe_load(f)
     if config.get("ffmpeg_path"):
         return config["ffmpeg_path"]
     for root, _, _ in os.walk("."):
@@ -25,74 +42,82 @@ def lookup_ffmpeg_path():
             return os.path.join(root, "ffmpeg.exe")
     return None
 
+
+def set_ffmpeg_path(ffmpeg_path: str, config_path: str = "config.yaml") -> None:
+    """
+    Set the ffmpeg path in the config file.
+
+    Args:
+        ffmpeg_path (str): The path to ffmpeg.
+        config_path (str, optional): The path to the config file. Defaults to "config.yaml".
+    """
+    with open(config_path, "r+") as f:
+        config: typing.Dict[str, str] = yaml.safe_load(f)
+        config["ffmpeg_path"] = ffmpeg_path
+        f.seek(0)
+        yaml.dump(config, f)
+        f.truncate()
+
+create_config_file()
 ffmpeg_path = lookup_ffmpeg_path()
+set_ffmpeg_path(ffmpeg_path)
 
 # The two below functions are the meat and bones of the program
-import subprocess
-
-def gif_to_mp4(input_path, output_path="output/output.mp4"):
+def convert_file(input_path: str, output_path: str, file_type: str) -> None:
     """
-    Convert a GIF file to an MP4 file.
+    Convert a file to the specified file type.
 
     Parameters:
-        input_path (str): The path to the input GIF file.
-        output_path (str, optional): The path to the output MP4 file. Defaults to "output/output.mp4".
+        input_path (str): The path to the input file.
+        output_path (str): The path to the output file.
+        file_type (str): The type of file to convert to. Valid values are "mp4" or "gif".
 
     Returns:
         None
     """
     if ffmpeg_path is not None:
-        command = [
-            ffmpeg_path,
-            '-i',
-            input_path,
-            '-vf',
-            'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-            '-c:v',
-            'libx264',
-            '-preset',
-            'ultrafast',
-            '-crf',
-            '30',
-            '-c:a',
-            'copy',
-            output_path
-        ]
+        if file_type == "mp4":
+            command = [
+                ffmpeg_path,
+                '-i',
+                input_path,
+                '-vf',
+                'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+                '-c:v',
+                'libx264',
+                '-preset',
+                'ultrafast',
+                '-crf',
+                '30',
+                '-c:a',
+                'copy',
+                output_path
+            ]
+        elif file_type == "gif":
+            command = [
+                ffmpeg_path,
+                "-y",
+                "-ss",
+                "30",
+                "-t",
+                "3",
+                "-i",
+                input_path,
+                "-vf",
+                "fps=10,scale=320:-1:flags=lanczos",
+                "-loop",
+                "0",
+                "-i",
+                input_path,
+                "-filter_complex",
+                "fps=10,scale=320:-1:flags=lanczos[x];[x]split[x1][x2];[x1]palettegen[p];[x2][p]paletteuse",
+                output_path
+            ]
+        else:
+            raise ValueError("Invalid file type. Valid values are 'mp4' or 'gif'.")
+        
         subprocess.run(command)
 
-def mp4_to_gif(input_path, output_path="output/output.gif"):
-    """
-    Converts an MP4 video to a GIF image.
-
-    Parameters:
-        input_path (str): The path to the input MP4 file.
-        output_path (str, optional): The path to the output GIF file. Defaults to "output/output.gif".
-
-    Returns:
-        None
-    """
-    if ffmpeg_path is not None:
-        command = [
-            ffmpeg_path,
-            "-y",
-            "-ss",
-            "30",
-            "-t",
-            "3",
-            "-i",
-            input_path,
-            "-vf",
-            "fps=10,scale=320:-1:flags=lanczos",
-            "-loop",
-            "0",
-            "-i",
-            input_path,
-            "-filter_complex",
-            "fps=10,scale=320:-1:flags=lanczos[x];[x]split[x1][x2];[x1]palettegen[p];[x2][p]paletteuse",
-            output_path
-        ]
-        subprocess.run(command)
-create_config_file()
 
 def main():
     parser = argparse.ArgumentParser()
@@ -109,12 +134,12 @@ def main():
         if choice.lower() == "mp4":
             path = input("Enter the path to the MP4 file: ")
             output_path = input("Enter the output path (default: output/output.gif): ")
-            mp4_to_gif(path)
+            convert_file(path, output_path, "gif")
             break
         elif choice.lower() == "gif":
             path = input("Enter the path to the GIF file: ")
             output_path = input("Enter the output path (default: output/output.mp4): ")
-            gif_to_mp4(path)
+            convert_file(path, output_path, "mp4")
             break
         else:
             print("Invalid choice. Please enter 'mp4' or 'gif'.")

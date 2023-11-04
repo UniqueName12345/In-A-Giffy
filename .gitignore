@@ -165,3 +165,5 @@ ffmpeg.exe
 # the folder where output is put. might contain sensitive information so it's best to not include it
 # in version control
 output/
+# config files are generally not put in version control
+config.yaml
