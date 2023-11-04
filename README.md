@@ -11,13 +11,7 @@ An automatic FFmpeg installer is under development, but it will be released in a
 
 ## Running
 
-Firstly, you need to install the dependencies.
-
-```
-pip install -r requirements.txt
-```
-
-Then, you can run the program.
+Since every library used in In A Giffy (apart from FFmpeg) is part of the Python standard library, you can just run the program.
 
 ```
 python main.py
